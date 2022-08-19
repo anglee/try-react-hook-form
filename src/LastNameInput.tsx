@@ -1,3 +1,4 @@
+import { Tag } from "antd";
 import { FC } from "react";
 import { useController } from "react-hook-form";
 import { Control } from "react-hook-form/dist/types";
@@ -18,8 +19,10 @@ const LastNameInput: FC<{ control?: Control<IFormValues> }> = ({ control }) => {
         error={fieldState.error?.message}
         {...field}
       />
-      <p>{fieldState.isTouched && "Touched"}</p>
-      <p>{fieldState.isDirty && "Dirty"}</p>
+      <div style={{ marginTop: 4 }}>
+        {fieldState.isTouched && <Tag color="cyan">isTouched</Tag>}
+        {fieldState.isDirty && <Tag color="cyan">isDirty</Tag>}
+      </div>
     </>
   );
 };

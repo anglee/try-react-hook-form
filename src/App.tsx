@@ -3,7 +3,7 @@ import {
   ArrowUpOutlined,
   DeleteOutlined,
 } from "@ant-design/icons";
-import { Button, Form, Input } from "antd";
+import { Button, Form, Input, Tag } from "antd";
 import dayjs from "dayjs";
 import _ from "lodash";
 import {
@@ -22,25 +22,21 @@ import DatePicker from "./DayJsDatePicker";
 
 function App() {
   const {
-    register, // don't need when using Controller
     handleSubmit,
     watch,
     control,
     formState: { errors, touchedFields },
+    setValue,
   } = useForm<IFormValues>({ mode: "onBlur" });
 
-  const { fields, append, prepend, remove, swap, move, insert } = useFieldArray(
-    { control, name: "tags" } as any
-  );
+  const { fields, append, prepend, remove, move } = useFieldArray({
+    control,
+    name: "tags",
+  } as any);
 
   const onSubmit: SubmitHandler<IFormValues> = (values) => {
     console.log("onSubmit", values);
   };
-  console.log("errors.firstName", errors.firstName);
-  console.log("errors.lastName", errors.lastName);
-  console.log("errors.tags", errors.tags);
-  console.log("touchedFields", touchedFields);
-
   return (
     <Form requiredMark onFinish={handleSubmit(onSubmit)}>
       <Controller
@@ -56,8 +52,10 @@ function App() {
               help={fieldState.error && "This is required"}
             >
               <Input {...field} />
-              <p>{fieldState.isTouched && "Touched"}</p>
-              <p>{fieldState.isDirty && "Dirty"}</p>
+              <div style={{ marginTop: 4 }}>
+                {fieldState.isTouched && <Tag color="cyan">isTouched</Tag>}
+                {fieldState.isDirty && <Tag color="cyan">isDirty</Tag>}
+              </div>
             </Form.Item>
           </>
         )}
@@ -100,84 +98,101 @@ function App() {
           )}
         />
       </div>
-      {fields.map((field, index) => (
-        <div key={field.id} style={{ display: "flex" }}>
-          <Controller
-            name={`tags.${index}.group`}
-            control={control}
-            rules={{ required: true }}
-            render={({ field, fieldState }) => (
-              <Form.Item
-                required
-                label={`Group ${index}`}
-                validateStatus={fieldState.error ? "error" : undefined}
-                help={fieldState.error && "Group is required"}
-              >
-                <Input {...field} />
-              </Form.Item>
-            )}
-          />
-          <Controller
-            name={`tags.${index}.expiration`}
-            control={control}
-            render={({ field, fieldState }) => (
-              <Form.Item label={`Expiration`}>
-                <DatePicker
-                  showTime
-                  value={field.value ? dayjs(field.value) : undefined}
-                  onChange={(v) => {
-                    field.onChange(v?.valueOf() ?? null);
-                  }}
-                  onBlur={field.onBlur}
-                />
-              </Form.Item>
-            )}
-          />
+      <div>Groups</div>
+      <div style={{ border: "1px solid black", padding: 16, marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
           <Button
             onClick={() => {
-              remove(index);
+              append({
+                group: _.uniqueId("group"),
+                expiration: dayjs().valueOf(),
+              });
             }}
-            icon={<DeleteOutlined />}
-          />
+          >
+            Append group
+          </Button>
           <Button
-            disabled={index === 0}
             onClick={() => {
-              move(index, index - 1);
+              prepend({
+                group: _.uniqueId("group"),
+                expiration: dayjs().valueOf(),
+              });
             }}
-            icon={<ArrowUpOutlined />}
-          />
-          <Button
-            disabled={index === fields.length - 1}
-            onClick={() => {
-              move(index, index + 1);
-            }}
-            icon={<ArrowDownOutlined />}
-          />
+          >
+            Prepend group
+          </Button>
         </div>
-      ))}
-      <div>
-        <Button
-          onClick={() => {
-            append({
-              group: _.uniqueId("group"),
-              expiration: dayjs().valueOf(),
-            });
-          }}
-        >
-          Append
-        </Button>
-        <Button
-          onClick={() => {
-            prepend({
-              group: _.uniqueId("group"),
-              expiration: dayjs().valueOf(),
-            });
-          }}
-        >
-          Prepend
-        </Button>
+        {fields.map((field, index) => (
+          <div key={field.id} style={{ display: "flex", gap: 8 }}>
+            <Controller
+              name={`tags.${index}.group`}
+              control={control}
+              rules={{ required: true }}
+              render={({ field, fieldState }) => (
+                <Form.Item
+                  required
+                  label={`Group ${index}`}
+                  validateStatus={fieldState.error ? "error" : undefined}
+                  help={fieldState.error && "Group is required"}
+                >
+                  <Input {...field} />
+                </Form.Item>
+              )}
+            />
+            <Controller
+              name={`tags.${index}.expiration`}
+              control={control}
+              render={({ field, fieldState }) => (
+                <Form.Item label={`Expiration`}>
+                  <DatePicker
+                    showTime
+                    value={field.value ? dayjs(field.value) : undefined}
+                    onChange={(v) => {
+                      field.onChange(v?.valueOf() ?? null);
+                    }}
+                    onBlur={field.onBlur}
+                  />
+                </Form.Item>
+              )}
+            />
+            <Button
+              onClick={() => {
+                remove(index);
+              }}
+              icon={<DeleteOutlined />}
+            />
+            <Button
+              disabled={index === 0}
+              onClick={() => {
+                move(index, index - 1);
+              }}
+              icon={<ArrowUpOutlined />}
+            />
+            <Button
+              disabled={index === fields.length - 1}
+              onClick={() => {
+                move(index, index + 1);
+              }}
+              icon={<ArrowDownOutlined />}
+            />
+          </div>
+        ))}
       </div>
-      <div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <Button
+          onClick={() => {
+            setValue("firstName", "Foo");
+            setValue("lastName", "Bar");
+            setValue("birthDate", dayjs().valueOf());
+            setValue("tags", [
+              { group: "apple", expiration: dayjs("2022-01-01").valueOf() },
+              { group: "bee", expiration: dayjs("2022-02-01").valueOf() },
+              { group: "cat", expiration: dayjs("2022-03-01").valueOf() },
+            ]);
+          }}
+        >
+          Prefill values
+        </Button>
         <Button type="primary" htmlType="submit">
           Submit
         </Button>
