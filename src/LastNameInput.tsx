@@ -1,26 +1,25 @@
-import { Form, Input } from "antd";
-import React from "react";
+import { FC } from "react";
 import { useController } from "react-hook-form";
 import { Control } from "react-hook-form/dist/types";
-import { IFormValues } from "./IFormValues.type";
+import FormInput from "./FormInput";
+import { IFormValues } from "./types";
 
-const LastNameInput = ({ control }: { control?: Control<IFormValues> }) => {
+const LastNameInput: FC<{ control?: Control<IFormValues> }> = ({ control }) => {
   const { field, fieldState } = useController({
     control,
     name: "lastName",
-    rules: { required: true },
+    rules: { required: "Last Name is required" },
   });
   return (
     <>
-      <Form.Item
+      <FormInput
+        required
         label="Last Name"
-        validateStatus={fieldState.error ? "error" : undefined}
-        help={fieldState.error && "Last Name is required"}
-      >
-        <Input {...field} />
-        <p>{fieldState.isTouched && "Touched"}</p>
-        <p>{fieldState.isDirty && "Dirty"}</p>
-      </Form.Item>
+        error={fieldState.error?.message}
+        {...field}
+      />
+      <p>{fieldState.isTouched && "Touched"}</p>
+      <p>{fieldState.isDirty && "Dirty"}</p>
     </>
   );
 };

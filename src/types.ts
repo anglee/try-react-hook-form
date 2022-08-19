@@ -1,4 +1,7 @@
-import { ITag } from "./ITag.type";
+export interface ITag {
+  group: string;
+  expiration: number;
+}
 
 export interface IFormValues {
   firstName: string;

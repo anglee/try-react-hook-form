@@ -6,17 +6,19 @@ import {
 import { Button, Form, Input } from "antd";
 import dayjs from "dayjs";
 import _ from "lodash";
-import React from "react";
 import {
   Controller,
   SubmitHandler,
   useFieldArray,
   useForm,
 } from "react-hook-form";
-import "./App.css";
-import { IFormValues } from "./IFormValues.type";
+import "antd/dist/antd.css";
+import "./index.css";
+import { IFormValues } from "./types";
 import LastNameInput from "./LastNameInput";
-import MyDatePicker from "./MyDatePicker";
+import DatePicker from "./DayJsDatePicker";
+
+// also check https://codesandbox.io/s/react-hook-form-v7-controller-forked-gm73w2?file=/src/AntD.js
 
 function App() {
   const {
@@ -40,16 +42,18 @@ function App() {
   console.log("touchedFields", touchedFields);
 
   return (
-    <Form onFinish={handleSubmit(onSubmit)}>
+    <Form requiredMark onFinish={handleSubmit(onSubmit)}>
       <Controller
         name="firstName"
         control={control}
+        rules={{ required: true }}
         render={({ field, fieldState }) => (
           <>
             <Form.Item
+              required
               label="First Name"
-              validateStatus={fieldState.error ? "error" : undefined}
-              help={fieldState.error && "First Name is required"}
+              validateStatus={fieldState.error && "error"}
+              help={fieldState.error && "This is required"}
             >
               <Input {...field} />
               <p>{fieldState.isTouched && "Touched"}</p>
@@ -57,24 +61,40 @@ function App() {
             </Form.Item>
           </>
         )}
-        rules={{ required: true }}
       />
       <LastNameInput control={control} />
       <div>
         <Controller
           control={control}
           name="birthDate"
+          rules={{
+            validate: {
+              required: (v) => {
+                if (_.isNil(v)) {
+                  return "Please enter a valid date & time";
+                }
+              },
+              future: (v) => {
+                if (!_.isNil(v) && dayjs(v).isAfter(dayjs())) {
+                  return "Are you traveling from the future?";
+                }
+              },
+            },
+          }}
           render={({ field, fieldState }) => (
             <Form.Item
               label={`Birth Date`}
-              validateStatus={fieldState.error ? "error" : undefined}
-              help={fieldState.error && "Group is required"}
+              required
+              validateStatus={fieldState.error && "error"}
+              help={fieldState.error?.message}
             >
-              <MyDatePicker
+              <DatePicker
                 value={field.value ? dayjs(field.value) : undefined}
                 onChange={(v) => {
                   field.onChange(v?.valueOf() ?? null);
+                  field.onBlur(); // trigger validation
                 }}
+                onBlur={field.onBlur}
               />
             </Form.Item>
           )}
@@ -85,8 +105,10 @@ function App() {
           <Controller
             name={`tags.${index}.group`}
             control={control}
+            rules={{ required: true }}
             render={({ field, fieldState }) => (
               <Form.Item
+                required
                 label={`Group ${index}`}
                 validateStatus={fieldState.error ? "error" : undefined}
                 help={fieldState.error && "Group is required"}
@@ -94,27 +116,22 @@ function App() {
                 <Input {...field} />
               </Form.Item>
             )}
-            rules={{ required: true }}
           />
           <Controller
             name={`tags.${index}.expiration`}
             control={control}
             render={({ field, fieldState }) => (
-              <Form.Item
-                label={`Expiration ${index}`}
-                validateStatus={fieldState.error ? "error" : undefined}
-                help={fieldState.error && "Expiration is required"}
-              >
-                <MyDatePicker
+              <Form.Item label={`Expiration`}>
+                <DatePicker
                   showTime
                   value={field.value ? dayjs(field.value) : undefined}
                   onChange={(v) => {
                     field.onChange(v?.valueOf() ?? null);
                   }}
+                  onBlur={field.onBlur}
                 />
               </Form.Item>
             )}
-            rules={{ required: true }}
           />
           <Button
             onClick={() => {
@@ -168,7 +185,6 @@ function App() {
       <h1>watch()</h1>
       <pre>{JSON.stringify(watch(), null, 2)}</pre>
       <h1>errors</h1>
-      <pre>{JSON.stringify(errors, null, 2)}</pre>
       <pre>
         {Object.keys(errors).length > 0 &&
           JSON.stringify(
